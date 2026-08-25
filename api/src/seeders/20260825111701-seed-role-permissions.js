@@ -26,12 +26,13 @@ const ROLE_PERMISSION_MAP = {
   ],
   MANAGER: [
     "projects.view",
+    "users.view",
     "tasks.view",
     "tasks.assign",
     "tasks.update_status",
     "reports.view",
   ],
-  MEMBER: ["tasks.view", "tasks.update_status"],
+  MEMBER: ["projects.view", "tasks.view", "tasks.update_status"],
 };
 
 module.exports = {

@@ -93,11 +93,19 @@ const rotateRefreshToken = async (refreshToken) => {
 
   const { userId: storedUserId, error } = await consumeRefreshToken(jti);
 
-  // If Redis is healthy but the token is missing -> reuse / revocation.
-  if (!error && !storedUserId) {
+  // Fail closed: if we cannot confirm the revocation state (e.g. Redis is
+  // unavailable), refuse to issue new tokens rather than silently skipping
+  // the single-use rotation checks. This prevents a stolen refresh token
+  // from being reused while the revocation store is unreachable.
+  if (error) {
+    throw new ErrorHandler("Unable to validate refresh token", 503);
+  }
+
+  // Token missing from Redis -> already consumed (reuse) or never issued.
+  if (!storedUserId) {
     throw new ErrorHandler("Refresh token has been revoked or reused", 403);
   }
-  if (!error && storedUserId !== userId) {
+  if (storedUserId !== userId) {
     throw new ErrorHandler("Refresh token does not match the user", 403);
   }
 

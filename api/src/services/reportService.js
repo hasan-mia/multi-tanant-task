@@ -29,6 +29,30 @@ const getUtilization = async ({ orgId, page, limit }) => {
 
   const totalUsers = await User.count({ where: { org_id: orgId } });
 
+  // Org-level distinct task counts. Per-user totals (above) intentionally
+  // count each member's own assignments; summing them would double-count tasks
+  // shared by multiple members, so the headline "Total Tasks" KPI is computed
+  // here from distinct tasks instead.
+  const orgSql = `
+    SELECT
+      COUNT(DISTINCT t.id) AS totalTasks,
+      COUNT(DISTINCT CASE WHEN t.status = 'DONE' THEN t.id END) AS completedTasks,
+      COUNT(DISTINCT CASE WHEN t.due_date < NOW() AND t.status <> 'DONE' THEN t.id END) AS overdueTasks
+    FROM tasks t
+    JOIN projects p ON p.id = t.project_id
+    WHERE p.org_id = :orgId
+  `;
+  const orgRows = await User.sequelize.query(orgSql, {
+    replacements: { orgId },
+    type: Sequelize.QueryTypes.SELECT,
+  });
+  const org = orgRows[0] || {};
+  const summary = {
+    totalTasks: Number(org.totalTasks) || 0,
+    completedTasks: Number(org.completedTasks) || 0,
+    overdueTasks: Number(org.overdueTasks) || 0,
+  };
+
   const data = rows.map((row) => {
     const total = Number(row.totalTasks) || 0;
     const completed = Number(row.completedTasks) || 0;
@@ -47,6 +71,7 @@ const getUtilization = async ({ orgId, page, limit }) => {
 
   return {
     data,
+    summary,
     meta: buildMeta(page, limit, totalUsers),
   };
 };

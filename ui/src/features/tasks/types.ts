@@ -1,6 +1,8 @@
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE";
 export type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
 
+import type { Assignee } from "@/features/users/types";
+
 export interface Task {
   id: string;
   project_id: string;
@@ -9,6 +11,7 @@ export interface Task {
   status: TaskStatus;
   due_date?: string | null;
   created_at?: string;
+  assignees?: Assignee[];
 }
 
 export interface TaskQuery {

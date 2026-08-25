@@ -28,10 +28,18 @@ const createOrganization = [
   body("name").trim().notEmpty().withMessage("Organization name is required").isLength({ max: 255 }),
 ];
 
+const updateOrganization = [
+  uuidParam("id"),
+  body("name").trim().notEmpty().withMessage("Organization name is required").isLength({ max: 255 }),
+];
+
+const deleteOrganization = [uuidParam("id")];
+
 const createProject = [
   body("title").trim().notEmpty().withMessage("Project title is required").isLength({ max: 255 }),
   body("budget").optional().isDecimal().withMessage("Budget must be numeric"),
   body("status").optional().isIn(PROJECT_STATUSES).withMessage(`status must be one of ${PROJECT_STATUSES.join(", ")}`),
+  body("org_id").optional().isUUID().withMessage("org_id must be a valid UUID"),
 ];
 
 const updateProject = [
@@ -39,6 +47,7 @@ const updateProject = [
   body("title").optional().trim().notEmpty().withMessage("Title cannot be empty").isLength({ max: 255 }),
   body("budget").optional().isDecimal().withMessage("Budget must be numeric"),
   body("status").optional().isIn(PROJECT_STATUSES).withMessage(`status must be one of ${PROJECT_STATUSES.join(", ")}`),
+  body("org_id").optional().isUUID().withMessage("org_id must be a valid UUID"),
 ];
 
 const archiveProject = [uuidParam("id")];
@@ -104,12 +113,18 @@ const getOrganization = [uuidParam("id")];
 
 const getTask = [uuidParam("id")];
 
+const deleteTask = [uuidParam("id")];
+
+const unassignTask = [uuidParam("id"), uuidParam("userId")];
+
 const utilizationReport = [...pagination];
 
 module.exports = {
   login,
   refresh,
   createOrganization,
+  updateOrganization,
+  deleteOrganization,
   createProject,
   updateProject,
   archiveProject,
@@ -125,6 +140,8 @@ module.exports = {
   getProject,
   getOrganization,
   getTask,
+  deleteTask,
+  unassignTask,
   deleteUser,
   utilizationReport,
 };

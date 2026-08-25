@@ -19,4 +19,29 @@ const getOrganization = async (id) => {
   return org;
 };
 
-module.exports = { createOrganization, listOrganizations, getOrganization };
+const updateOrganization = async (id, { name }) => {
+  const org = await getOrganization(id);
+  if (name && name !== org.name) {
+    const existing = await Organization.findOne({ where: { name } });
+    if (existing) {
+      throw new ErrorHandler("Organization name already exists", 409);
+    }
+    org.name = name;
+  }
+  await org.save();
+  return org;
+};
+
+const deleteOrganization = async (id) => {
+  const org = await getOrganization(id);
+  await org.destroy();
+  return { id };
+};
+
+module.exports = {
+  createOrganization,
+  listOrganizations,
+  getOrganization,
+  updateOrganization,
+  deleteOrganization,
+};

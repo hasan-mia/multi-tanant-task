@@ -2,13 +2,13 @@ const bcrypt = require("bcryptjs");
 const { Role, User } = require("../models");
 const { v4: uuidv4 } = require("uuid");
 
-const generateAdmin = async () => {
+const generateUsers = async () => {
   const roles = [
     {
       id: uuidv4(),
-      name: "admin",
-      code: "ADMIN",
-      description: "Administrator with management access",
+      name: "member",
+      code: "MEMBER",
+      description: "Regular member with limited access",
       is_active: true,
       created_at: new Date(),
       updated_at: new Date(),
@@ -34,8 +34,15 @@ const generateAdmin = async () => {
       first_name: "Admin",
       last_name: "Admin",
       password: "hasan@123",
-      roleName: "admin",
+      roleName: "member",
     },
+    {
+      email: "demo@gmail.com",
+      first_name: "Demo",
+      last_name: "User",
+      password: "demo@123",
+      roleName: "member",
+    }
   ];
 
   const createdUsers = [];
@@ -73,4 +80,4 @@ const generateAdmin = async () => {
   };
 };
 
-module.exports = generateAdmin;
+module.exports = generateUsers;

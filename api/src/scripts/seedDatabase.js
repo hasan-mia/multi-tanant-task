@@ -1,16 +1,11 @@
-const generateAdmin = require('./generateAdmin');
-
-// Boot-time seeding helper. Role/permission/user data is primarily managed
-// by the sequelize-cli seeders under src/seeders; this legacy helper only
-// ensures an initial admin/demo user exists. It no longer uses any numeric
-// score system.
+const generateUsers = require('./generateUsers');
 
 const seedDatabase = async () => {
   try {
     try {
-      await generateAdmin();
+      await generateUsers();
     } catch (error) {
-      console.error('Error generating admin:', error);
+      console.error('Error generating users:', error);
     }
 
     console.log('Database seeding completed successfully.');

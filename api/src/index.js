@@ -8,7 +8,7 @@ dotenv.config({ path: './.env' });
 const app = require('./app');
 const { connectDatabase } = require('./config/connectDatabase');
 const { logError } = require('./utils/utils');
-const seedDatabase = require('./scripts/seedDatabase');
+// const seedDatabase = require('./scripts/seedDatabase');
 const { connectSocket } = require('./config/connectSocket');
 const { initPermissions } = require('./utils/permissions');
 const db = require('./models');
@@ -123,12 +123,12 @@ const startServer = async () => {
     const dbConnected = await connectDatabase();
 
     if (dbConnected) {
-      try {
-        await seedDatabase();
-      } catch (error) {
-        logError('Database seeding', error);
-        console.log('Continuing without seeding...');
-      }
+      // try {
+      //   await seedDatabase();
+      // } catch (error) {
+      //   logError('Database seeding', error);
+      //   console.log('Continuing without seeding...');
+      // }
 
       // Load the role -> permission mapping into cache for the new RBAC layer.
       try {

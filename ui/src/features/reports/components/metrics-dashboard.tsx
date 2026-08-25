@@ -43,6 +43,16 @@ export function MetricsDashboard() {
 
   const summary = useMemo(() => {
     const rows = data?.data ?? [];
+    const s = data?.summary;
+    if (s) {
+      const totalTasks = s.totalTasks;
+      const completed = s.completedTasks;
+      const overdue = s.overdueTasks;
+      const avgCompletion =
+        totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 0;
+      return { totalUsers: rows.length, totalTasks, completed, overdue, avgCompletion };
+    }
+    // Fallback to per-user sums if summary is unavailable.
     const totalUsers = rows.length;
     const totalTasks = rows.reduce((a, r) => a + r.totalTasks, 0);
     const completed = rows.reduce((a, r) => a + r.completedTasks, 0);

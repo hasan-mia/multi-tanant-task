@@ -12,7 +12,6 @@ const { issueTokenPair, rotateRefreshToken } = require('../services/tokenService
 const catchAsyncError = require('../middleware/catchAsyncError');
 const { sendResponse, handleError } = require('../utils/utils');
 
-// Shape the public user object (never includes password_hash).
 const shapeUser = (user) => ({
   id: user.id,
   email: user.email,

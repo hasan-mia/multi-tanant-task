@@ -1,5 +1,6 @@
 const catchAsyncError = require("../middleware/catchAsyncError");
 const { sendResponse, handleError } = require("../utils/utils");
+const { parsePagination } = require("../utils/pagination");
 const taskService = require("../services/taskService");
 
 exports.createTask = catchAsyncError(async (req, res) => {
@@ -76,6 +77,53 @@ exports.updateTaskStatus = catchAsyncError(async (req, res) => {
       result,
       true
     );
+  } catch (error) {
+    handleError(res, error);
+  }
+});
+
+exports.deleteTask = catchAsyncError(async (req, res) => {
+  try {
+    await taskService.deleteTask(req.params.id, req.user.orgId);
+    sendResponse(res, 200, true, "Task deleted successfully", null, true);
+  } catch (error) {
+    handleError(res, error);
+  }
+});
+
+exports.unassignTask = catchAsyncError(async (req, res) => {
+  try {
+    await taskService.unassignTask(
+      req.params.id,
+      req.user.orgId,
+      req.params.userId
+    );
+    sendResponse(
+      res,
+      200,
+      true,
+      "User removed from task successfully",
+      null,
+      true
+    );
+  } catch (error) {
+    handleError(res, error);
+  }
+});
+
+exports.getMyTasks = catchAsyncError(async (req, res) => {
+  try {
+    const { page, limit } = parsePagination(req.query);
+    const result = await taskService.getMyTasks(req.user.orgId, req.user.userId, {
+      page,
+      limit,
+      status: req.query.status,
+      priority: req.query.priority,
+      search: req.query.search,
+      sortBy: req.query.sortBy || "created_at",
+      order: req.query.order || "DESC",
+    });
+    sendResponse(res, 200, true, "My tasks fetched successfully", result, true);
   } catch (error) {
     handleError(res, error);
   }

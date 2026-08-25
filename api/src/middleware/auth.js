@@ -1,4 +1,3 @@
-const { User } = require('../models');
 const jwt = require('jsonwebtoken');
 const catchAsyncError = require('./catchAsyncError');
 const { ErrorHandler } = require('../utils/utils');
@@ -64,37 +63,4 @@ exports.isAuthorizeRoles = (...roles) => {
   };
 };
 
-exports.refreshToken = catchAsyncError(async (req, res, next) => {
-  const { refreshToken } = req.body;
 
-  if (!refreshToken) {
-    return next(new ErrorHandler('Refresh token required', 401));
-  }
-
-  try {
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-    const user = await User.findByPk(decoded.id);
-
-    if (!user) {
-      return next(new ErrorHandler('User not found', 401));
-    }
-
-    const accessToken = jwt.sign(
-      { id: user.id, roles: user.roles },
-      process.env.JWT_SECRET,
-      { expiresIn: '15m' }
-    );
-
-    const newRefreshToken = jwt.sign(
-      { id: user.id },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.json({ accessToken, refreshToken: newRefreshToken });
-  } catch (error) {
-    return next(
-      new ErrorHandler(error.message || 'Invalid refresh token', 403)
-    );
-  }
-});

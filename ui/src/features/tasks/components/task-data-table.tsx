@@ -5,11 +5,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getProjectTasks,
   updateTaskStatus,
+  deleteTask,
   TASK_STATUS_TRANSITIONS,
 } from "@/features/tasks/api";
 import type { Task, TaskPriority, TaskStatus } from "@/features/tasks/types";
+import type { Assignee } from "@/features/users/types";
 import { Can, useHasPermission } from "@/components/common/can";
 import { useDebounce } from "@/hooks/use-debounce";
+import { AssignTaskDialog } from "@/features/tasks/components/assign-task-dialog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 const STATUS_OPTIONS: TaskStatus[] = [
   "TODO",
@@ -44,6 +48,11 @@ const priorityStyles: Record<TaskPriority, string> = {
   MEDIUM: "bg-amber-100 text-amber-700",
   HIGH: "bg-orange-100 text-orange-700",
 };
+
+function assigneeName(a: Assignee) {
+  const n = `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim();
+  return n || a.email;
+}
 
 export function TaskDataTable({ projectId }: { projectId: string }) {
   const queryClient = useQueryClient();
@@ -150,6 +159,7 @@ export function TaskDataTable({ projectId }: { projectId: string }) {
               <th className="px-4 py-2 font-medium">Title</th>
               <th className="px-4 py-2 font-medium">Priority</th>
               <th className="px-4 py-2 font-medium">Status</th>
+              <th className="px-4 py-2 font-medium">Assignees</th>
               <th className="px-4 py-2 font-medium">Due date</th>
               <th className="px-4 py-2 font-medium">Actions</th>
             </tr>
@@ -157,14 +167,14 @@ export function TaskDataTable({ projectId }: { projectId: string }) {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-6">
+                <td colSpan={6} className="px-4 py-6">
                   <Skeleton className="h-6 w-full" />
                 </td>
               </tr>
             ) : tasks.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-4 py-6 text-center text-muted-foreground"
                 >
                   No tasks found.
@@ -175,6 +185,7 @@ export function TaskDataTable({ projectId }: { projectId: string }) {
                 <TaskRow
                   key={task.id}
                   task={task}
+                  projectId={projectId}
                   canUpdate={hasUpdateStatus}
                   onUpdate={(status) =>
                     mutation.mutate({ id: task.id, status })
@@ -218,15 +229,27 @@ export function TaskDataTable({ projectId }: { projectId: string }) {
 
 function TaskRow({
   task,
+  projectId,
   canUpdate,
   onUpdate,
   updating,
 }: {
   task: Task;
+  projectId: string;
   canUpdate: boolean;
   onUpdate: (status: string) => void;
   updating: boolean;
 }) {
+  const queryClient = useQueryClient();
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteTask(task.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", projectId] });
+      toast.success("Task deleted");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const nextStatuses = TASK_STATUS_TRANSITIONS[task.status] ?? [];
   const showUpdate = canUpdate && nextStatuses.length > 0;
 
@@ -249,33 +272,62 @@ function TaskRow({
           {task.status.replace("_", " ").toLowerCase()}
         </Badge>
       </td>
+      <td className="px-4 py-2">
+        {task.assignees && task.assignees.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {task.assignees.map((a) => (
+              <Badge key={a.id} variant="secondary">
+                {assigneeName(a)}
+              </Badge>
+            ))}
+          </div>
+        ) : (
+          <span className="text-xs text-muted-foreground">Unassigned</span>
+        )}
+      </td>
       <td className="px-4 py-2 text-muted-foreground">
         {task.due_date
           ? new Date(task.due_date).toLocaleDateString()
           : "—"}
       </td>
       <td className="px-4 py-2">
-        <Can permission="tasks.update_status">
-          {showUpdate ? (
-            <Select
-              disabled={updating}
-              onValueChange={(value) => value ? onUpdate(value as string) : undefined}
+        <div className="flex flex-wrap items-center gap-2">
+          <Can permission="tasks.update_status">
+            {showUpdate ? (
+              <Select
+                disabled={updating}
+                onValueChange={(value) => value ? onUpdate(value as string) : undefined}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Move to…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {nextStatuses.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s.replace("_", " ")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <span className="text-xs text-muted-foreground">
+                No transition
+              </span>
+            )}
+          </Can>
+          <AssignTaskDialog taskId={task.id} projectId={projectId} />
+          <Can permission="tasks.delete">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => deleteMutation.mutate()}
             >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Move to…" />
-              </SelectTrigger>
-              <SelectContent>
-                {nextStatuses.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s.replace("_", " ")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <span className="text-xs text-muted-foreground">No transition</span>
-          )}
-        </Can>
+              <Trash2 className="size-4" />
+            </Button>
+          </Can>
+        </div>
       </td>
     </tr>
   );

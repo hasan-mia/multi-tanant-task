@@ -10,9 +10,8 @@ const {
 } = require("../utils/validators");
 const controller = require("../controllers/userController");
 
-// All user management is ADMIN-only and strictly scoped to the admin's org.
 userRouter
-  .get("/", requireAuth, requireRole("ADMIN"), controller.listUsers)
+  .get("/", requireAuth, requireRole("ADMIN", "MANAGER"), controller.listUsers)
   .post(
     "/",
     requireAuth,
@@ -21,7 +20,7 @@ userRouter
     validate,
     controller.createUser
   )
-  .get("/:id", requireAuth, requireRole("ADMIN"), getUser, validate, controller.getUser)
+  .get("/:id", requireAuth, requireRole("ADMIN", "MANAGER"), getUser, validate, controller.getUser)
   .patch(
     "/:id",
     requireAuth,

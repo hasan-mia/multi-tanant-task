@@ -44,7 +44,6 @@ npm install
 cp .env.example .env          # then edit DB/Redis/JWT values as needed
 npm run migrate               # create tables
 npm run seed                  # seed ADMIN / MANAGER / MEMBER demo users
-node src/scripts/seedDatabase.js   # ensure the initial ADMIN user exists
 npm run dev                   # nodemon → http://localhost:3001
 ```
 

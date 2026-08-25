@@ -1,6 +1,7 @@
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 const { Task, Project, TaskAssignment, User } = require("../models");
 const { ErrorHandler } = require("../utils/utils");
+const { buildMeta } = require("../utils/pagination");
 const { isValidTransition } = require("../utils/taskTransitions");
 
 const createTask = async (
@@ -146,10 +147,93 @@ const updateTaskStatus = async (taskId, orgId, userId, role, nextStatus) => {
   return result;
 };
 
+const deleteTask = async (taskId, orgId) => {
+  const task = await findTaskInOrg(taskId, orgId);
+  await task.destroy();
+  return { id: task.id };
+};
+
+const unassignTask = async (taskId, orgId, userId) => {
+  const task = await findTaskInOrg(taskId, orgId);
+
+  const user = await User.findOne({
+    where: { id: userId, org_id: orgId },
+  });
+  if (!user) {
+    throw new ErrorHandler("User not found in your organization", 404);
+  }
+
+  const assignment = await TaskAssignment.findOne({
+    where: { task_id: task.id, user_id: user.id },
+  });
+  if (!assignment) {
+    throw new ErrorHandler("User is not assigned to this task", 404);
+  }
+
+  await assignment.destroy();
+  return { task_id: task.id, user_id: user.id };
+};
+
+const getMyTasks = async (
+  orgId,
+  userId,
+  { page, limit, status, priority, search, sortBy = "created_at", order = "DESC" }
+) => {
+  // Only return tasks assigned to the current user, scoped to the org's
+  // projects. This is the canonical "My Tasks" view used by assignees
+  // (including MEMBERs) who may not otherwise see a project's full task list.
+  const where = {};
+  if (status) where.status = status;
+  if (priority) where.priority = priority;
+  if (search) where.title = { [Op.like]: `%${search}%` };
+
+  let orderClause;
+  if (sortBy === "priority") {
+    orderClause = [
+      Sequelize.literal("FIELD(priority, 'LOW', 'MEDIUM', 'HIGH')"),
+      order,
+    ];
+  } else {
+    orderClause = [[sortBy, order]];
+  }
+
+  const { rows, count } = await Task.findAndCountAll({
+    where,
+    include: [
+      {
+        model: Project,
+        as: "project",
+        where: { org_id: orgId },
+        attributes: ["id", "title"],
+        required: true,
+      },
+      {
+        model: TaskAssignment,
+        as: "taskAssignments",
+        where: { user_id: userId },
+        attributes: ["assigned_at"],
+        required: true,
+      },
+    ],
+    order: orderClause,
+    limit,
+    offset: (page - 1) * limit,
+    distinct: true,
+  });
+
+  return {
+    data: rows,
+    meta: buildMeta(page, limit, count),
+  };
+};
+
 module.exports = {
   createTask,
   findTaskInOrg,
   assignTask,
   getAssignees,
   updateTaskStatus,
+  getMyTasks,
+  deleteTask,
+  unassignTask,
 };

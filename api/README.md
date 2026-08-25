@@ -419,6 +419,8 @@ Centralized guards: `requireAuth`, `requireRole(...)`, `requirePermission(...)`
 | POST   | `/api/organizations`              | ADMIN                  | Create organization |
 | GET    | `/api/organizations`              | authenticated          | List organizations |
 | GET    | `/api/organizations/:id`          | authenticated          | Get organization |
+| PUT    | `/api/organizations/:id`          | ADMIN                  | Update organization (rename) |
+| DELETE | `/api/organizations/:id`          | ADMIN                  | Delete organization |
 | GET    | `/api/permissions`                | ADMIN                  | List all available permission codes (catalog, grouped by module) |
 | POST   | `/api/roles`                      | ADMIN                  | Create a new (dynamic) role |
 | GET    | `/api/roles`                      | ADMIN                  | List roles |
@@ -432,7 +434,8 @@ Centralized guards: `requireAuth`, `requireRole(...)`, `requirePermission(...)`
 | GET    | `/api/users/:id`                  | ADMIN                  | Get org user |
 | PATCH  | `/api/users/:id`                  | ADMIN                  | Update org user (cannot change own role) |
 | DELETE | `/api/users/:id`                  | ADMIN                  | Delete org user |
-| POST   | `/api/projects`                   | projects.create        | Create project (org-scoped) |
+| POST   | `/api/projects`                   | projects.create        | Create project (org selected via `org_id`, defaults to caller's org) |
+| GET    | `/api/projects`                   | projects.view          | List projects (paginated; optional `orgId` filter; includes organization) |
 | GET    | `/api/projects`                   | projects.view          | List projects (paginated) |
 | GET    | `/api/projects/:id`               | projects.view          | Get project |
 | PATCH  | `/api/projects/:id`               | projects.update        | Update project |
@@ -510,8 +513,11 @@ curl http://localhost:3001/api/reports/utilization \
 
 ### Security Notes
 
-- `org_id`, `role`, and `roleId` are **never** trusted from the request body;
-  they come from the authenticated JWT (`req.user.orgId` / `req.user.roleId`).
+- `role` and `roleId` are **never** trusted from the request body; they come from
+  the authenticated JWT (`req.user.roleId`). `org_id` on a **project** may be supplied
+  in the request body but is strictly validated against existing organizations
+  (`projects`/`updateProject`); a user's own `org_id` still comes from the JWT and
+  scopes their default project listing.
 - All organization-scoped queries filter by `req.user.orgId` (tenant isolation).
 - Members can only read/update tasks assigned to them (enforced in the service layer).
 - A user's role is resolved via `users.role_id → roles → role_permissions →

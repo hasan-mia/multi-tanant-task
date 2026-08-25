@@ -54,7 +54,7 @@ const registerUser = async (data) => {
         {
           model: Role,
           as: 'roleRecord',
-          attributes: ['id', 'name', 'description'],
+          attributes: ['id', 'name', 'code', 'description'],
         },
       ],
     });
@@ -66,8 +66,10 @@ const registerUser = async (data) => {
     const permissions = await getRolePermissionCodes(userWithRole.role_id);
 
     // Remove sensitive info
-    const userResponse = { ...user.toJSON() };
+    const userResponse = { ...userWithRole.toJSON() };
     delete userResponse.password_hash;
+    // Expose the stable role code so clients can drive role-aware UI.
+    userResponse.role = userWithRole.roleRecord?.code ?? null;
 
     return {
       user: userResponse,
@@ -100,7 +102,7 @@ const loginUser = async (data) => {
         {
           model: Role,
           as: 'roleRecord',
-          attributes: ['id', 'name', 'description'],
+          attributes: ['id', 'name', 'code', 'description'],
         },
       ],
     });
@@ -120,6 +122,8 @@ const loginUser = async (data) => {
     // Remove sensitive data
     const userResponse = { ...user.toJSON() };
     delete userResponse.password_hash;
+    // Expose the stable role code so clients can drive role-aware UI.
+    userResponse.role = user.roleRecord?.code ?? null;
 
     return {
       user: userResponse,
@@ -327,6 +331,7 @@ const getProfile = async (userId) => {
 
     const result = {
       ...user.toJSON(),
+      role: user.roleRecord?.code ?? null,
       permissions,
     };
 

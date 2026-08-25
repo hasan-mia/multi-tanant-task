@@ -10,7 +10,7 @@ exports.createProject = catchAsyncError(async (req, res) => {
       title: req.body.title,
       budget: req.body.budget,
       status: req.body.status,
-      orgId: req.user.orgId,
+      orgId: req.body.org_id || req.user.orgId,
     });
     sendResponse(res, 201, true, "Project created successfully", project, true);
   } catch (error) {
@@ -21,8 +21,11 @@ exports.createProject = catchAsyncError(async (req, res) => {
 exports.getProjects = catchAsyncError(async (req, res) => {
   try {
     const { page, limit } = parsePagination(req.query);
+    const allOrgs = req.query.orgId === "all" && req.user.role === "ADMIN";
     const result = await projectService.getProjects({
-      orgId: req.user.orgId,
+      orgId: req.query.orgId,
+      scopeOrgId: req.user.orgId,
+      allOrgs,
       page,
       limit,
     });
@@ -34,9 +37,11 @@ exports.getProjects = catchAsyncError(async (req, res) => {
 
 exports.getProject = catchAsyncError(async (req, res) => {
   try {
+    const allOrgs = req.query.orgId === "all" && req.user.role === "ADMIN";
     const project = await projectService.getProjectById(
       req.params.id,
-      req.user.orgId
+      req.query.orgId && req.query.orgId !== "all" ? req.query.orgId : undefined,
+      allOrgs ? undefined : req.user.orgId
     );
     sendResponse(res, 200, true, "Project fetched successfully", project, true);
   } catch (error) {

@@ -1,6 +1,7 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProject, archiveProject } from "@/features/projects/api";
 import { TaskDataTable } from "@/features/tasks/components/task-data-table";
@@ -9,24 +10,29 @@ import { Can } from "@/components/common/can";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Building2 } from "lucide-react";
 import { toast } from "sonner";
 
-export default function ProjectDetailPage() {
+function ProjectDetailInner() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const projectId = params.id;
+  const orgId = searchParams.get("orgId") ?? undefined;
   const queryClient = useQueryClient();
 
   const { data: project, isLoading } = useQuery({
-    queryKey: ["project", projectId],
-    queryFn: () => getProject(projectId),
+    queryKey: ["project", projectId, orgId],
+    queryFn: () => getProject(projectId, orgId),
   });
 
   const archiveMutation = useMutation({
     mutationFn: () => archiveProject(projectId),
     onSuccess: () => {
       toast.success("Project archived");
-      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      queryClient.invalidateQueries({
+        queryKey: ["project", projectId, orgId],
+      });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       router.push("/dashboard");
     },
@@ -34,7 +40,8 @@ export default function ProjectDetailPage() {
   });
 
   if (isLoading) return <Skeleton className="h-40 w-full" />;
-  if (!project) return <p className="text-sm text-muted-foreground">Project not found.</p>;
+  if (!project)
+    return <p className="text-sm text-muted-foreground">Project not found.</p>;
 
   return (
     <div className="space-y-6">
@@ -50,6 +57,12 @@ export default function ProjectDetailPage() {
           <Badge variant="outline" className="capitalize">
             {project.status.toLowerCase()}
           </Badge>
+          {project.organization && (
+            <Badge variant="secondary" className="gap-1">
+              <Building2 className="size-3.5" />
+              {project.organization.name}
+            </Badge>
+          )}
         </div>
         <div className="flex gap-2">
           <Can permission="projects.archive">
@@ -72,5 +85,13 @@ export default function ProjectDetailPage() {
         </Can>
       </div>
     </div>
+  );
+}
+
+export default function ProjectDetailPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+      <ProjectDetailInner />
+    </Suspense>
   );
 }

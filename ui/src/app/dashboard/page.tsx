@@ -1,28 +1,23 @@
 "use client";
 
-import { MetricsDashboard } from "@/features/reports/components/metrics-dashboard";
-import { ProjectList, CreateProjectDialog } from "@/features/projects/components/project-list";
-import { Can } from "@/components/common/can";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { OverviewDashboard } from "@/features/dashboard/overview";
+import { useAuthStore } from "@/features/auth/store";
 
 export default function DashboardPage() {
-  return (
-    <div className="space-y-8">
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Project Health Metrics</h2>
-        </div>
-        <Can permission="reports.view" fallback={<p className="text-sm text-muted-foreground">You do not have permission to view reports.</p>}>
-          <MetricsDashboard />
-        </Can>
-      </section>
+  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const hasProjectView = useAuthStore((s) => s.hasPermission("projects.view"));
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Projects</h2>
-          <CreateProjectDialog />
-        </div>
-        <ProjectList />
-      </section>
-    </div>
-  );
+  useEffect(() => {
+    // Only redirect authenticated members (tasks-only) away from the
+    // overview. Unauthenticated users are handled by the layout guard,
+    // which sends them to /login.
+    if (user && !hasProjectView) router.replace("/dashboard/tasks");
+  }, [user, hasProjectView, router]);
+
+  if (!user || !hasProjectView) return null;
+
+  return <OverviewDashboard />;
 }

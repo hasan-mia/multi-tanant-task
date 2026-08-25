@@ -6,6 +6,8 @@ const {
   assignTask,
   taskAssignees,
   updateTaskStatus,
+  deleteTask,
+  unassignTask,
 } = require("../utils/validators");
 const controller = require("../controllers/taskController");
 
@@ -18,6 +20,14 @@ taskRouter
     validate,
     controller.assignTask
   )
+  .delete(
+    "/:id/assign/:userId",
+    requireAuth,
+    requirePermission("tasks.assign"),
+    unassignTask,
+    validate,
+    controller.unassignTask
+  )
   .get(
     "/:id/assignees",
     requireAuth,
@@ -26,6 +36,14 @@ taskRouter
     validate,
     controller.getAssignees
   )
+  .delete(
+    "/:id",
+    requireAuth,
+    requirePermission("tasks.delete"),
+    deleteTask,
+    validate,
+    controller.deleteTask
+  )
   .patch(
     "/:id/status",
     requireAuth,
@@ -33,6 +51,12 @@ taskRouter
     updateTaskStatus,
     validate,
     controller.updateTaskStatus
+  )
+  .get(
+    "/assigned",
+    requireAuth,
+    requirePermission("tasks.view"),
+    controller.getMyTasks
   );
 
 module.exports = taskRouter;
