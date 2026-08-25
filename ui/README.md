@@ -129,15 +129,31 @@ restrict the task table to self-assigned tasks.
 - `npm run typecheck` — `tsc --noEmit`
 
 ## API reference (consumed endpoints)
+
+Every request is sent with `Authorization: Bearer <access_token>` (auto-attached by the
+`apiClient` interceptor) to `NEXT_PUBLIC_API_URL/api`.
+
 | Method | Path | Used for |
 |--------|------|----------|
-| POST | `/api/auth/login` | Sign in, get tokens + permissions |
-| POST | `/api/auth/refresh` | Rotate access token |
-| GET | `/api/auth/me` | Restore session profile |
-| GET | `/api/projects` | Project list |
+| POST | `/api/auth/login` | Sign in; returns `access_token`, `refresh_token`, `user`, `permissions` |
+| POST | `/api/auth/refresh` | Rotate access token using `refresh_token` (auto on 401) |
+| GET | `/api/auth/me` | Restore session profile + permissions on load |
+| GET | `/api/organizations` | List organizations (tenant picker for project create/list) |
+| GET | `/api/organizations/:id` | Get a single organization |
+| POST | `/api/organizations` | Create organization (`ADMIN`) |
+| PUT | `/api/organizations/:id` | Update organization (`ADMIN`) |
+| DELETE | `/api/organizations/:id` | Delete organization (`ADMIN`) |
+| GET | `/api/users` | List org users (member picker for task assignment) |
+| GET | `/api/projects` | Project list (paginated, optional `orgId` filter) |
+| GET | `/api/projects/:id` | Project detail |
 | POST | `/api/projects` | Create project (`projects.create`) |
-| POST | `/api/projects/:id/archive` | Archive (`projects.archive`) |
-| GET | `/api/projects/:id/tasks` | Task table (filters, search, pagination) |
-| POST | `/api/projects/:id/tasks` | Create task (`tasks.create`) |
-| PATCH | `/api/tasks/:id/status` | Update status (`tasks.update_status`) |
-| GET | `/api/reports/utilization` | Metrics (`reports.view`) |
+| POST | `/api/projects/:id/archive` | Archive project (`projects.archive`) |
+| GET | `/api/projects/:projectId/tasks` | Task table (filters, search, pagination) |
+| POST | `/api/projects/:projectId/tasks` | Create task (`tasks.create`) |
+| PATCH | `/api/tasks/:id/status` | Update task status (`tasks.update_status`) |
+| POST | `/api/tasks/:id/assign` | Assign task to a member (`tasks.assign`) |
+| GET | `/api/tasks/:id/assignees` | List task assignees |
+| DELETE | `/api/tasks/:id` | Delete task (`tasks.delete`) |
+| DELETE | `/api/tasks/:id/assign/:userId` | Unassign a member from a task |
+| GET | `/api/tasks/assigned` | "My Tasks" list for the current user (MEMBER landing) |
+| GET | `/api/reports/utilization` | Metrics dashboard (`reports.view`) |

@@ -190,9 +190,9 @@ REFRESH_TOKEN_SECRET=your_refresh_token_secret
 DB_TYPE=mysql          # mysql | postgres
 DB_SSL=false            # true | false
 DB_HOST=localhost
-DB_DATABASE=livetv
-DB_USERNAME=root
-DB_PASSWORD=hasan123
+DB_DATABASE=your_database_name
+DB_USERNAME=your_db_user
+DB_PASSWORD=your_db_password
 DB_PORT=3306
 # Optional: full connection string (overrides above)
 # DATABASE_URL=mysql://user:pass@host:3306/db
@@ -466,7 +466,7 @@ dynamic and additional roles can be created at runtime via `POST /api/roles`.)
 
 **Initial admin user** (`node src/scripts/seedDatabase.js`):
 
-- `hasan@gmail.com` — **ADMIN**, password `hasan@123`
+- `admin@yourdomain.com` — **ADMIN**, password `change_me`
 
 `generateAdmin.js` only ensures the `ADMIN` role and this initial admin user
 exist. The `MANAGER` / `MEMBER` roles and their demo users are provided entirely
