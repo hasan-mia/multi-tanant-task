@@ -29,7 +29,7 @@ enforced by the API — the UI only mirrors permission codes it receives.
 
 - **Node.js 22.x**
 - **MySQL 8.x** (or MariaDB)
-- **Redis** (for refresh-token rotation)
+- **Redis**
 - npm
 
 ## Getting started
