@@ -78,7 +78,7 @@ Open `http://localhost:3000`, sign in, and you'll land on the dashboard.
 ## Project layout
 
 ```
-multi-tanant-boilerplate/
+multi-tanant-task/
 ├── README.md            # this file
 ├── api/                 # Express REST API (see api/README.md)
 └── ui/                  # Next.js client (see ui/README.md)
