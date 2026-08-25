@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  express:
+    container_name: boilerplate-api
+    build:
+      context: .
+      dockerfile: Dockerfile # make sure your Dockerfile is at the root
+    ports:
+      - "3001:3001" # Assuming your app runs on port 3001 inside container
+
+# # Networks
+# networks:
+#   app-network:
+#     driver: bridge
+# # Volumes
+# volumes:
+#   postgres_data:
+#     driver: local
+#   redis_data:
+#     driver: local
+#   pgadmin_data:
+#     driver: local

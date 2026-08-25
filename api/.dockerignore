@@ -1,0 +1,10 @@
+// # Node modules and build artifacts
+node_modules;
+build.next;
+
+// # Logs
+npm - debug.log;
+pnpm - lock.yaml;
+package -
+  // # Env and config files
+  lock.json.env.DS_Store.vscode.eslintrc.json.prettierrc;
